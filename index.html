@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>非参数统计</title>
+  <meta charset="utf-8">
+  <meta name="description" content="非参数统计">
+  <meta name="author" content="yaleidu">
+  <meta name="generator" content="slidify" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta http-equiv="X-UA-Compatible" content="chrome=1">
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/default.css" media="all" >
+  <link rel="stylesheet" href="libraries/frameworks/io2012/phone.css" 
+    media="only screen and (max-device-width: 480px)" >
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/slidify.css" >
+  <link rel="stylesheet" href="libraries/highlighters/prettify/css/tomorrow.css" />
+  <base target="_blank"> <!-- This amazingness opens all links in a new tab. -->
+  <script data-main="libraries/frameworks/io2012/js/slides" 
+    src="libraries/frameworks/io2012/js/require-1.0.8.min.js">
+  </script>
+  
+    <link rel="stylesheet" href = "assets/css/ribbons.css">
+
+</head>
+<body style="opacity: 0">
+  <slides class="layout-widescreen">
+    
+    <!-- LOGO SLIDE -->
+    <!-- END LOGO SLIDE -->
+    
+
+    <!-- TITLE SLIDE -->
+    <!-- Should I move this to a Local Layout File? -->
+    <slide class="title-slide segue nobackground">
+      <hgroup class="auto-fadein">
+        <h1>非参数统计</h1>
+        <h2>多样本检验</h2>
+        <p>yaleidu<br/>开心就好</p>
+      </hgroup>
+      <a href="https://github.com/badbye/Non-parameter.mutiple/zipball/gh-pages" class="example">
+        Download
+      </a>
+          </slide>
+
+    <!-- SLIDES -->
+      <slide class="" id="slide-1" style="background:;">
+  <hgroup>
+    <h2>目录</h2>
+  </hgroup>
+  <article>
+    <p>3.1 Kruskal-Wallis秩和检验</p>
+
+<p>3.2 正态记分检验</p>
+
+<p>3.3 Jonckheere-Terpstra检验</p>
+
+<p>3.4 完全区组设计: Friedman秩和检验</p>
+
+<p>3.5 Kendall协同系数检验</p>
+
+<p>3.6 完全区组设计: 二元响应的Cochran检验</p>
+
+<p>3.7 完全区组设计: Page检验</p>
+
+<p>3.8 不完全区组设计: Durbin检验</p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+      <slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>3.1 Kruskal-Wallis秩和检验</h2>
+  </hgroup>
+  <article>
+    <p>假设数据来自相似的连续分布.</p>
+
+<pre><code class="r">kw.test = function(data, group) {
+    ### lengths of each group
+    n.vector = tapply(group, group, length)
+    R = rank(data)
+    N = length(data)
+    ### squares of each group&#39;s sum group
+    sum.vector = tapply(R, group, function(x) sum(x)^2)
+    H = 12/N/(N + 1) * sum(sum.vector/n.vector) - 3 * (N + 1)
+    ### p value to caculate
+}
+</code></pre>
+
+<p>注: &quot;p value to caculate&quot; 是书中没有给出具体是什么分布,故无从计算p值,只计算出统计量.下同.</p>
+
+<p>内置函数: kruskal.test(data, group)</p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+      <slide class="" id="slide-3" style="background:;">
+  <hgroup>
+    <h2>3.2 正态记分检验</h2>
+  </hgroup>
+  <article>
+    <pre><code class="r">norm.mutiple = function(data, group) {
+    w = cbind(data, group)
+    w = w[order(data), ]
+    n.vec = tapply(data, group, length)
+    norm.score = qnorm((1:sum(n.vec))/(sum(n.vec) + 1))
+    w = cbind(w, 1:sum(n.vec), norm.score)
+    T = (sum(n.vec) - 1) * sum(tapply(norm.score, w[, 2], function(x) sum(x)^2/length(x)))/sum(norm.score^2)
+    p = pchisq(T, length(unique(group)) - 1)
+    list(H1 = &quot;H1: Not all the accumulate functions are identical&quot;, p.value = min(p, 
+        1 - p))
+}
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+      <slide class="" id="slide-4" style="background:;">
+  <hgroup>
+    <h2>3.3 Jonckheere-Terpstra检验</h2>
+  </hgroup>
+  <article>
+    <p>假定k个独立样本有同样形状的连续分布.比Kruskal-walliss检验有更强的势,即更容易拒绝原假设.<br>
+可以选择有序的备择假设,判断数据是否有上升或者下降的趋势,如:</p>
+
+<p>$$H_1: \theta_1 \le \theta_2  \le \ldots \le \theta_k $$</p>
+
+<pre><code class="r">jt.test = function(data, group) {
+    k = length(unique(group))
+    U = matrix(0, k, k)
+    data.cate = split(data, group)
+    for (i in 1:k) {
+        for (j in (i + 1):k) {
+            U[i, j] = sum(sapply(data.cate[[i]], &quot;-&quot;, data.cate[[j]]) &gt; 0)
+        }
+    }
+    J = sum(U)
+    ## p.value to caculate
+}
+</code></pre>
+
+<p>注: SAGx包中有JT.test函数.</p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+      <slide class="" id="slide-5" style="background:;">
+  <hgroup>
+    <h2>3.4 完全区组设计: Friedman秩和检验</h2>
+  </hgroup>
+  <article>
+    <p>每个处理在每个区组恰好有一个观测值.</p>
+
+<pre><code class="r">Friedman = function(data) {
+    # 行表示处理,列代表区组
+    if ((is.matrix(data) | is.data.frame(data)) == FALSE) 
+        stop(&quot;input should be a matrix or a dataframe&quot;)
+    k = nrow(data)
+    b = ncol(data)
+    r = apply(m, 2, rank)
+    Q = 12/b/k/(k + 1) * sum(rowSums(r)^2) - 3 * b * (k + 1)
+    W = Q/b/(k - 1)
+    ## p.value to caculate
+}
+</code></pre>
+
+<p>注: 内置函数friedman.test()</p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+      <slide class="" id="slide-6" style="background:;">
+  <hgroup>
+    <h2>3.5 Kendall协同系数检验</h2>
+  </hgroup>
+  <article>
+    <pre><code class="r">kendall.test = function(data) {
+    # 行数据表示按某一标准的评判结果 列数据表示同一个体在不同标准下的评判结果
+    if ((is.matrix(data) | is.data.frame(data)) == FALSE) 
+        stop(&quot;input should be a matrix or a dataframe&quot;)
+    r = colSums(data)
+    m = nrow(data)
+    n = ncol(data)
+    S = sum((r - m * (n + 1)/2)^2)
+    W = 12 * S/m^2/(n^3 - n)
+    chi.p = pchisq(m * (n - 1) * W, n - 1, low = F)
+    F.p = pf((m - 1) * W/(1 - W), n - 1 - 2/m, (m - 1) * (n - 1 - 2/m), low = F)
+    list(H1 = &quot;Samples are related to some extent&quot;, Chisq.pValue = chi.p, F.pValue = F.p)
+}
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+      <slide class="" id="slide-7" style="background:;">
+  <hgroup>
+    <h2>3.6 完全区组设计: 二元响应的Cochran检验</h2>
+  </hgroup>
+  <article>
+    <p>二元变量的观测值.</p>
+
+<pre><code class="r">cochran.test = function(data) {
+    # 行数据表示按某一标准对所有个体的评判结果
+    # 列数据表示同一个体在不同标准下的评判结果
+    if ((is.matrix(data) | is.data.frame(data)) == FALSE) 
+        stop(&quot;input should be a matrix or a dataframe&quot;)
+
+    n = colSums(data)
+    l = rowSums(data)
+    N = sum(n)
+    k = ncol(data)
+    Q = k * (k - 1) * sum((n - mean(n))^2)/(k * N - sum(l^2))
+    list(H1 = &quot;Not all the individuals are regarded equally&quot;, p.value = pchisq(Q, 
+        k - 1, low = F))
+}
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+      <slide class="" id="slide-8" style="background:;">
+  <hgroup>
+    <h2>3.7 完全区组设计: Page检验</h2>
+  </hgroup>
+  <article>
+    <p>正态近似,自动处理打结情况.</p>
+
+<pre><code class="r">page.test = function(data) {
+    # 行数据表示同一区组的不同处理结果 列数据表示不同区组的同一处理结果
+    if ((is.matrix(data) | is.data.frame(data)) == FALSE) 
+        stop(&quot;input should be a matrix or a dataframe&quot;)
+    r = apply(data, 1, rank)
+    R = rowSums(r)
+    L = sum(R * 1:length(R))
+    k = ncol(data)
+    b = nrow(data)
+    u = b * k * (k + 1)^2/4
+    tie = as.vector(r)%%1 == 0
+    s = ifelse(all(tie), b * (k^3 - k)^2, k * (k^2 - 1) * (b * k * (k^2 - 1) - 
+        sum(as.vector(r)[!tie]^3 - as.vector(r)[!tie])))
+    Z = (L - u)/sqrt(s/144/(k - 1))
+    list(H1 = &quot;Not all the infulences of diffierent processings are the same&quot;, 
+        p.value = pnorm(Z, low = F))
+}
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+      <slide class="" id="slide-9" style="background:;">
+  <hgroup>
+    <h2>3.8 不完全区组设计: Durbin检验</h2>
+  </hgroup>
+  <article>
+    <p>这种数据的存在太反人类,该睡觉的时候不该考虑太复杂的问题.</p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+    <slide class="backdrop"></slide>
+  </slides>
+
+  <!--[if IE]>
+    <script 
+      src="http://ajax.googleapis.com/ajax/libs/chrome-frame/1/CFInstall.min.js">  
+    </script>
+    <script>CFInstall.check({mode: 'overlay'});</script>
+  <![endif]-->
+</body>
+<!-- Grab CDN jQuery, fall back to local if offline -->
+<script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.7.min.js"></script>
+<script>window.jQuery || document.write('<script src="libraries/widgets/quiz/js/jquery-1.7.min.js"><\/script>')</script>
+<!-- Load Javascripts for Widgets -->
+<!-- MathJax: Fall back to local if CDN offline but local image fonts are not supported (saves >100MB) -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [['$','$'], ['\\(','\\)']],
+      processEscapes: true
+    }
+  });
+</script>
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/2.0-latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<!-- <script src="https://c328740.ssl.cf1.rackcdn.com/mathjax/2.0-latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script> -->
+<script>window.MathJax || document.write('<script type="text/x-mathjax-config">MathJax.Hub.Config({"HTML-CSS":{imageFont:null}});<\/script><script src="libraries/widgets/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"><\/script>')
+</script>
+<!-- Google Prettify -->
+<script src="http://cdnjs.cloudflare.com/ajax/libs/prettify/188.0.0/prettify.js"></script>
+<script src='libraries/highlighters/prettify/js/lang-r.js'></script>
+<script>
+  var pres = document.getElementsByTagName("pre");
+  for (var i=0; i < pres.length; ++i) {
+    pres[i].className = "prettyprint ";
+  }
+  prettyPrint();
+</script>
+<!-- End Google Prettify --></html>
