@@ -98,7 +98,7 @@ jt.test = function(data, group) {
 ```
 
 
-注: SAGx包中有JT.test函数.
+注: SAGx包中有JT.test函数,但该包已经下架.
 
 ---
   
