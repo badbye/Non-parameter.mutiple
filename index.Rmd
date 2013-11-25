@@ -83,7 +83,7 @@ jt.test = function(data, group){
   k = length(unique(group))
   U = matrix(0, k, k)
   data.cate = split(data, group)
-  for (i in 1:k){
+  for (i in 1:(k-1)){
     for (j in (i+1):k){
       U[i, j] = sum(sapply(data.cate[[i]], '-', data.cate[[j]]) > 0)
     }
